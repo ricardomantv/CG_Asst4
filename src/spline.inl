@@ -37,7 +37,7 @@ inline T Spline<T>::cubicSplineUnitInterval(
      return T();
    }
 
-   return h00 * position0 + h10 * tangent0 + h01 * tangent1 + h11 * position1;
+   return h00 * position0 + h10 * tangent0 + h01 * position1 + h11 * tangent1;
 }
 
 // Returns a state interpolated between the values directly before and after the given time.
@@ -56,16 +56,26 @@ inline T Spline<T>::evaluate( double time, int derivative )
    } else {
      if(time <= knots.begin()->first) {
        // Return first knot if query is before it
-       return knots.begin()->second;
+       if(derivative == 0) {
+         return knots.begin()->second;
+       } else {
+         return T();
+       }
+
      }
 
-     if(knots.end()->first <= time) {
+     if(prev(knots.end())->first <= time) {
        // Return last knot if query is after it
-       return knots.end()->second;
+       if(derivative == 0) {
+         return prev(knots.end())->second;
+       } else {
+         return T();
+       }
      }
 
-     KnotIter k1_it = knots.lower_bound(time);
+     // KnotIter k1_it = knots.lower_bound(time);
      KnotIter k2_it = knots.upper_bound(time);
+     KnotIter k1_it = prev(k2_it);
 
      double t1 = k1_it->first;
      double t2 = k2_it->first;
@@ -79,19 +89,17 @@ inline T Spline<T>::evaluate( double time, int derivative )
        t0 = t1 - (t2 - t1);
        k0 = k1 - (k2 - k1);
      } else {
-       k1_it--;
-       t0 = k1_it->first;
-       k0 = k1_it->second;
+       t0 = prev(k1_it)->first;
+       k0 = prev(k1_it)->second;
      }
 
-     if(k2_it == knots.end()) {
+     if(k2_it == prev(knots.end())) {
        // No second knot to right of queried time, create virtual knot
        t3 = t2 + (t2 - t1);
        k3 = k2 + (k2 - k1);
      } else {
-       k2_it--;
-       t3 = k2_it->first;
-       k3 = k2_it->second;
+       t3 = next(k2_it)->first;
+       k3 = next(k2_it)->second;
      }
 
      double norm_t0 = (t0 - t1) / (t2 - t1); // will be negative
