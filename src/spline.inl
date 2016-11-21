@@ -12,16 +12,101 @@ inline T Spline<T>::cubicSplineUnitInterval(
       int derivative )
 {
    // TODO IMPLEMENT ME (TASK 1A)
-   return T();
+   double t = normalizedTime;
+   double t2 = pow(t, 2);
+   double t3 = pow(t, 3);
+
+   double h00, h10, h01, h11;
+   if(derivative == 0) {
+     h00 = 2 * t3 - 3 * t2 + 1;
+     h10 = t3 - 2 * t2 + t;
+     h01 = -2 * t3 + 3 * t2;
+     h11 = t3 - t2;
+   } else if(derivative == 1) {
+     h00 = 6 * t2 - 6 * t;
+     h10 = 3 * t2 - 4 * t + 1;
+     h01 = -6 * t2 + 6 * t;
+     h11 = 3 * t2 - 2 * t;
+   } else if(derivative == 2) {
+     h00 = 12 * t - 6;
+     h10 = 6 * t - 4;
+     h01 = -12 * t + 6;
+     h11 = 6 * t - 2;
+   } else {
+     // Invalid derivative
+     return T();
+   }
+
+   return h00 * position0 + h10 * tangent0 + h01 * tangent1 + h11 * position1;
 }
-            
+
 // Returns a state interpolated between the values directly before and after the given time.
 template <class T>
 inline T Spline<T>::evaluate( double time, int derivative )
 {
    // TODO IMPLEMENT ME (TASK 1B)
    if (knots.size() < 1) return T();
-   else return knots.begin()->second;
+
+   if(knots.size() == 1) {
+     if(derivative == 0) {
+       return knots.begin()->second;
+     } else {
+       return T();
+     }
+   } else {
+     if(time <= knots.begin()->first) {
+       // Return first knot if query is before it
+       return knots.begin()->second;
+     }
+
+     if(knots.end()->first <= time) {
+       // Return last knot if query is after it
+       return knots.end()->second;
+     }
+
+     KnotIter k1_it = knots.lower_bound(time);
+     KnotIter k2_it = knots.upper_bound(time);
+
+     double t1 = k1_it->first;
+     double t2 = k2_it->first;
+     T k1 = k1_it->second;
+     T k2 = k2_it->second;
+
+     double t0, t3;
+     T k0, k3;
+     if(k1_it == knots.begin()) {
+       // No second knot to left of queried time, create virtual knot
+       t0 = t1 - (t2 - t1);
+       k0 = k1 - (k2 - k1);
+     } else {
+       k1_it--;
+       t0 = k1_it->first;
+       k0 = k1_it->second;
+     }
+
+     if(k2_it == knots.end()) {
+       // No second knot to right of queried time, create virtual knot
+       t3 = t2 + (t2 - t1);
+       k3 = k2 + (k2 - k1);
+     } else {
+       k2_it--;
+       t3 = k2_it->first;
+       k3 = k2_it->second;
+     }
+
+     double norm_t0 = (t0 - t1) / (t2 - t1); // will be negative
+     double norm_t1 = 0;
+     double norm_t2 = 1;
+     double norm_t3 = (t3 - t1) / (t2 - t1); // will be greater than 1
+
+     T m1 = (k2 - k0) / (norm_t2 - norm_t0);
+     T m2 = (k3 - k1) / (norm_t3 - norm_t1);
+
+     double normT = (time - t1) / (t2 - t1);
+
+     return cubicSplineUnitInterval(k1, k2, m1, m2, normT, derivative);
+   }
+
 }
 
 // Removes the knot closest to the given time,

@@ -10,6 +10,7 @@
 
 #include <map>
 #include <cmath>
+#include <iostream>
 using namespace std;
 
 namespace CMU462
@@ -47,7 +48,7 @@ namespace CMU462
          // Removes the knot closest to the given time, within the
          // given tolerance. Returns true iff a knot was removed.
          bool removeKnot( double time, double tolerance = .001 );
-         
+
       protected:
          // Given a time between 0 and 1, evaluates a cubic polynomial with
          // the given endpoint and tangent values at the beginning (0) and
