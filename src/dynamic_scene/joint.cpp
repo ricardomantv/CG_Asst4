@@ -150,12 +150,20 @@ namespace CMU462 { namespace DynamicScene {
    Matrix4x4 Joint::getTransformation()
    {
      /* Implement Me! (Task 2a)
-     Initialize a 4x4 identity transformation matrix. Traverse the hierarchy starting from the parent of 
-     this joint all the way up to the root (root has parent of nullptr) and accumulate their transformations 
-     on the left side of your transformation matrix. Don't forget to apply a translation which extends along 
+     Initialize a 4x4 identity transformation matrix. Traverse the hierarchy starting from the parent of
+     this joint all the way up to the root (root has parent of nullptr) and accumulate their transformations
+     on the left side of your transformation matrix. Don't forget to apply a translation which extends along
      the axis of those joints. Finally, apply the mesh's transformation at the end.
      */
      Matrix4x4 T = Matrix4x4::identity();
+
+     for(Joint* j = parent; j != nullptr; j = j->parent) {
+       T = j->SceneObject::getTransformation() * T; // how to make this specific to each j?
+       T = Matrix4x4::translation(j->axis) * T;
+     }
+
+     // Get mesh's transformation
+     T = skeleton->mesh->getTransformation() * T;
 
      return T;
    }
@@ -178,22 +186,27 @@ namespace CMU462 { namespace DynamicScene {
    {
      /* Implement Me! (Task 2a)
      This should be fairly simple once you implement Joint::getTransformation().
-     You can utilize the transformation returned by Joint::getTransformation() to 
+     You can utilize the transformation returned by Joint::getTransformation() to
      compute the base position in world coordinate frame.
      */
 
-     return Vector3D();
+     Matrix4x4 T = this->getTransformation();
+     return T * position;
    }
 
    Vector3D Joint::getEndPosInWorld()
    {
      /* Implement Me! (Task 2a)
-     In addition to what you did for getBasePosInWorld(), you need to apply this joint's 
-     transformation and translate along this joint's axis to get the end position in world 
+     In addition to what you did for getBasePosInWorld(), you need to apply this joint's
+     transformation and translate along this joint's axis to get the end position in world
      coordinate frame.
      */
 
-     return Vector3D();
+     Matrix4x4 T = this->getTransformation();
+     Matrix4x4 self_T = this->SceneObject::getTransformation();
+     Matrix4x4 trans = Matrix4x4::translation(this->axis);
+
+     return trans * self_T * T * position;
    }
 } // namespace DynamicScene
 } // namespace CMU462
