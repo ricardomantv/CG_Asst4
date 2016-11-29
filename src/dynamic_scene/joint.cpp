@@ -71,6 +71,24 @@ namespace CMU462 { namespace DynamicScene {
    void Joint :: calculateAngleGradient( Joint* goalJoint, Vector3D q )
    {
      // Implement Me! (task 2B)
+     // Calculate column i of Jacobian matrix and store in Joint::ikAngleGradient
+
+     Matrix4x4 T = Matrix4x4::identity();// goalJoint->getTransformation();
+     Vector3D rx = T * Vector3D(1, 0, 0);
+     Vector3D ry = T * Vector3D(0, 1, 0);
+     Vector3D rz = T * Vector3D(0, 0, 1);
+     Vector3D p = (goalJoint->getEndPosInWorld() - this->getBasePosInWorld());
+     // std::cout << "goalJoint: " << goalJoint->getEndPosInWorld() << "\n";
+     // std::cout << this->getBasePosInWorld() << "\n";
+     // std::cout << "p = " << p << "\n";
+
+     Vector3D jx = cross(rx, p);
+     Vector3D jy = cross(ry, p);
+     Vector3D jz = cross(rz, p);
+     Vector3D diff = p - q;
+
+     this->ikAngleGradient = Vector3D(dot(jx, diff), dot(jy, diff), dot(jz, diff));
+     // std::cout << "ikAG: " << this->ikAngleGradient << "\n";
    }
 
 
@@ -155,11 +173,13 @@ namespace CMU462 { namespace DynamicScene {
      on the left side of your transformation matrix. Don't forget to apply a translation which extends along
      the axis of those joints. Finally, apply the mesh's transformation at the end.
      */
+
+
      Matrix4x4 T = Matrix4x4::identity();
 
      for(Joint* j = parent; j != nullptr; j = j->parent) {
-       T = j->SceneObject::getTransformation() * T; // how to make this specific to each j?
        T = Matrix4x4::translation(j->axis) * T;
+       T = j->SceneObject::getTransformation() * T;
      }
 
      // Get mesh's transformation
@@ -191,7 +211,10 @@ namespace CMU462 { namespace DynamicScene {
      */
 
      Matrix4x4 T = this->getTransformation();
-     return T * position;
+     Vector4D basePos = T * Vector4D(0, 0, 0, 1);
+
+     // std::cout << "basePos: " << basePos << "\n";
+     return Vector3D(basePos.x, basePos.y, basePos.z);
    }
 
    Vector3D Joint::getEndPosInWorld()
@@ -205,8 +228,10 @@ namespace CMU462 { namespace DynamicScene {
      Matrix4x4 T = this->getTransformation();
      Matrix4x4 self_T = this->SceneObject::getTransformation();
      Matrix4x4 trans = Matrix4x4::translation(this->axis);
+     Vector4D endPos = T * self_T * trans * Vector4D(0, 0, 0, 1);
 
-     return trans * self_T * T * position;
+     // std::cout << "endPos: " << endPos << "\n";
+     return Vector3D(endPos.x, endPos.y, endPos.z);
    }
 } // namespace DynamicScene
 } // namespace CMU462

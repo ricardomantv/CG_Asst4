@@ -27,7 +27,7 @@ namespace CMU462 { namespace DynamicScene {
     joints.clear();
     root = createNewJoint(nullptr, Vector3D(0, 0, 0));
   }
-  
+
   void Skeleton::set_draw_styles(DrawStyle *defaultStyle, DrawStyle *hoveredStyle,
     DrawStyle *selectedStyle) {
     this->defaultStyle = defaultStyle;
@@ -159,7 +159,7 @@ namespace CMU462 { namespace DynamicScene {
     glPopMatrix();
     gluDeleteQuadric(q);
   }
-  
+
   void Skeleton::setZAxis(Vector3D axis)
   {
     Vector3D zAxis(0., 0., 1.);
@@ -279,7 +279,7 @@ namespace CMU462 { namespace DynamicScene {
     glPopMatrix();
 
     gluCylinder(q, r, r, axisLength, 25, 25);
-    
+
     glPushMatrix();
     glTranslated(0, 0, axisLength);
     glRotated(90, 1, 0, 0);
@@ -372,6 +372,23 @@ namespace CMU462 { namespace DynamicScene {
    {
      // Implement Me! (Task 2B)
      // Do several iterations of Jacobian Transpose gradient descent for IK
+
+     double tau = 0.001;
+
+     typedef map<Joint*, Vector3D>::iterator TargetIter;
+     for(TargetIter t = targets.begin(); t != targets.end(); t++) {
+       // Calculate cost for current joint-target_point pair in map
+       Joint* targetJoint = t->first;
+       Vector3D q = t->second;
+       for(size_t i = 0; i < 100; i++){
+         for(Joint* j_i = targetJoint; j_i != root; j_i = j_i->parent) {
+           j_i->calculateAngleGradient(targetJoint, q);
+           j_i->setAngle(time, j_i->getAngle(time) - tau * j_i->ikAngleGradient);
+           j_i->rotation = j_i->getAngle(time);
+           // j_i->getEndPosInWorld();
+         }
+       }
+     }
    }
 
    void Skeleton::save(const char * filename)
@@ -521,7 +538,7 @@ namespace CMU462 { namespace DynamicScene {
        knotTimes.insert(time);
        pListElement = pListElement->NextSiblingElement("Knot");
      }
-     
+
      // rotations
      pElement = jointNode->FirstChildElement("Rotations");
      pListElement = pElement->FirstChildElement("Knot");

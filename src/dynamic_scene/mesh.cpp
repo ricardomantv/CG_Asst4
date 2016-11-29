@@ -28,7 +28,7 @@ Mesh::Mesh( Collada::PolymeshInfo& polyMesh, const Matrix4x4& transform)
       vertices[i] = (transform * Vector4D(vertices[i], 1)).projectTo3D();
    }
 
-   mesh.build(polygons, vertices);  
+   mesh.build(polygons, vertices);
    if (polyMesh.material) {
       bsdf = polyMesh.material->bsdf;
    } else {
@@ -45,6 +45,21 @@ Mesh::Mesh( Collada::PolymeshInfo& polyMesh, const Matrix4x4& transform)
 void Mesh::linearBlendSkinning(bool useCapsuleRadius)
 {
   // Implement Me! (Task 3a, Task 3b)
+  for(VertexIter v = mesh.verticesBegin(); v != mesh.verticesEnd(); v++) {
+    Vector3D pos = v->position;
+    vector<LBSInfo> infos;
+    for(size_t i = 0; i < skeleton->joints.size(); i++) {
+      Joint* j = skeleton->joints[i];
+      Matrix4x4 rest_trans = j->getBindTransformation();
+      Vector3D base_rest_pos = rest_trans * Vector3D(0, 0, 0);
+      Vector3D end_rest_pos = base_rest_pos + j->axis;
+
+      // From Wolfram MathWorld:
+      // Given line segment from x1 to x2 and point x0,
+      // dist = |(x0 - x1) x (x0 - x2)| / |(x2 - x1)|
+      double distance = cross(pos - base_rest_pos, pos - end_rest_pos).norm() / (end_rest_pos - base_rest_pos).norm();
+    }
+  }
 }
 
 
@@ -74,7 +89,7 @@ void Mesh::unkeyframe(double t) {
   positions.removeKnot(t, 0.1);
   rotations.removeKnot(t, 0.1);
   scales.removeKnot(t, 0.1);
-  if (skeleton) skeleton->unkeyframe(t); 
+  if (skeleton) skeleton->unkeyframe(t);
 }
 
 
