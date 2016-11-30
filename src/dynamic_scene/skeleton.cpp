@@ -384,7 +384,6 @@ namespace CMU462 { namespace DynamicScene {
          for(Joint* j_i = targetJoint; j_i != root; j_i = j_i->parent) {
            j_i->calculateAngleGradient(targetJoint, q);
            j_i->setAngle(time, j_i->getAngle(time) - tau * j_i->ikAngleGradient);
-           // j_i->rotation = j_i->getAngle(time);
          }
        }
      }

@@ -60,31 +60,19 @@ Mesh::Mesh( Collada::PolymeshInfo& polyMesh, const Matrix4x4& transform)
       // Calculate distance from vertex to joint
       Vector3D base = Vector3D(0, 0, 0);
       Vector3D end = j->axis;
-      // From Wolfram MathWorld:
-      // Given line segment from x1 to x2 and point x0,
-      // dist = |(x0 - x1) x (x0 - x2)| / |(x2 - x1)|
-
-      // Vector from A to C and from A to B
-      // Dot together to get projection form point to line, d
-      // if 0 < d < (a - b).norm() then use line distance
       double determinant = dot(pos_j - base, end - base);
-      // std::cout << "determinant = " << determinant << "\n";
       double distance;
       if(determinant <= 0) {
-        // std::cout << "d < 0\n";
         distance = (pos_j - base).norm();
       } else if((base - end).norm() <= determinant) {
-        // std::cout << "(a - b).norm() < d\n";
         distance = (pos_j - end).norm();
       } else {
-        // std::cout << "within A-B\n";
+        // From Wolfram MathWorld:
+        // Given line segment from x1 to x2 and point x0,
+        // dist = |(x0 - x1) x (x0 - x2)| / |(x2 - x1)|
         distance = cross(pos_j - base, pos_j - end).norm() / (end - base).norm();
       }
-      // std::cout << dist_to_base << ", " << dist_to_end << ", " << dist_to_line << "\n";
-      // std::cout << "distance = " << distance << ", capsuleRadius = " << j->capsuleRadius << "\n";
 
-
-      // std::cout << "Capsule Radius: " << ((!useCapsuleRadius) || (useCapsuleRadius && distance <= j->capsuleRadius)) << "\n";
       if(!useCapsuleRadius || (useCapsuleRadius && distance <= j->capsuleRadius)) {
         // Always add if not using capsule radius
         // If using capsule radius then only add if distance <= capsuleRadius
@@ -99,7 +87,6 @@ Mesh::Mesh( Collada::PolymeshInfo& polyMesh, const Matrix4x4& transform)
     if(0 < infos.size()) {
       for(size_t i = 0; i < infos.size(); i++) {
         LBSInfo info = infos[i];
-        // std::cout << "info: " << info.blendPos << ", " << (1.0 / info.distance) << "\n";
         newPos += ((1.0 / info.distance) / total_dist) * info.blendPos;
       }
     } else {
@@ -107,7 +94,6 @@ Mesh::Mesh( Collada::PolymeshInfo& polyMesh, const Matrix4x4& transform)
     }
 
     v->position = newPos;
-    // std::cout << "\n";
   }
 }
 
