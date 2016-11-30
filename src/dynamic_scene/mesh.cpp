@@ -42,23 +42,72 @@ Mesh::Mesh( Collada::PolymeshInfo& polyMesh, const Matrix4x4& transform)
    skeleton = new Skeleton(this);
 }
 
-void Mesh::linearBlendSkinning(bool useCapsuleRadius)
+  void Mesh::linearBlendSkinning(bool useCapsuleRadius)
 {
   // Implement Me! (Task 3a, Task 3b)
   for(VertexIter v = mesh.verticesBegin(); v != mesh.verticesEnd(); v++) {
-    Vector3D pos = v->position;
     vector<LBSInfo> infos;
+    double total_dist = 0;
     for(size_t i = 0; i < skeleton->joints.size(); i++) {
       Joint* j = skeleton->joints[i];
-      Matrix4x4 rest_trans = j->getBindTransformation();
-      Vector3D base_rest_pos = rest_trans * Vector3D(0, 0, 0);
-      Vector3D end_rest_pos = base_rest_pos + j->axis;
 
+      // Calculate blendPos for each joint
+      Vector3D blendPos = v->bindPosition;
+      blendPos = j->getBindTransformation().inv() * blendPos;
+      Vector3D pos_j = blendPos; // Save position in j-th joint coordinates for distance calculation
+      blendPos = j->getTransformation() * j->SceneObject::getTransformation() * blendPos;
+
+      // Calculate distance from vertex to joint
+      Vector3D base = Vector3D(0, 0, 0);
+      Vector3D end = j->axis;
       // From Wolfram MathWorld:
       // Given line segment from x1 to x2 and point x0,
       // dist = |(x0 - x1) x (x0 - x2)| / |(x2 - x1)|
-      double distance = cross(pos - base_rest_pos, pos - end_rest_pos).norm() / (end_rest_pos - base_rest_pos).norm();
+
+      // Vector from A to C and from A to B
+      // Dot together to get projection form point to line, d
+      // if 0 < d < (a - b).norm() then use line distance
+      double determinant = dot(pos_j - base, end - base);
+      // std::cout << "determinant = " << determinant << "\n";
+      double distance;
+      if(determinant <= 0) {
+        // std::cout << "d < 0\n";
+        distance = (pos_j - base).norm();
+      } else if((base - end).norm() <= determinant) {
+        // std::cout << "(a - b).norm() < d\n";
+        distance = (pos_j - end).norm();
+      } else {
+        // std::cout << "within A-B\n";
+        distance = cross(pos_j - base, pos_j - end).norm() / (end - base).norm();
+      }
+      // std::cout << dist_to_base << ", " << dist_to_end << ", " << dist_to_line << "\n";
+      // std::cout << "distance = " << distance << ", capsuleRadius = " << j->capsuleRadius << "\n";
+
+
+      // std::cout << "Capsule Radius: " << ((!useCapsuleRadius) || (useCapsuleRadius && distance <= j->capsuleRadius)) << "\n";
+      if(!useCapsuleRadius || (useCapsuleRadius && distance <= j->capsuleRadius)) {
+        // Always add if not using capsule radius
+        // If using capsule radius then only add if distance <= capsuleRadius
+        total_dist += (1.0 / distance);
+        LBSInfo info;
+        info.blendPos = blendPos;
+        info.distance = distance;
+        infos.push_back(info);
+      }
     }
+    Vector3D newPos = Vector3D(0, 0, 0);
+    if(0 < infos.size()) {
+      for(size_t i = 0; i < infos.size(); i++) {
+        LBSInfo info = infos[i];
+        // std::cout << "info: " << info.blendPos << ", " << (1.0 / info.distance) << "\n";
+        newPos += ((1.0 / info.distance) / total_dist) * info.blendPos;
+      }
+    } else {
+      newPos = v->bindPosition;
+    }
+
+    v->position = newPos;
+    // std::cout << "\n";
   }
 }
 

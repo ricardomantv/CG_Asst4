@@ -376,16 +376,15 @@ namespace CMU462 { namespace DynamicScene {
      double tau = 0.001;
 
      typedef map<Joint*, Vector3D>::iterator TargetIter;
-     for(TargetIter t = targets.begin(); t != targets.end(); t++) {
-       // Calculate cost for current joint-target_point pair in map
-       Joint* targetJoint = t->first;
-       Vector3D q = t->second;
-       for(size_t i = 0; i < 100; i++){
+     for(size_t i = 0; i < 100; i++){
+       for(TargetIter t = targets.begin(); t != targets.end(); t++) {
+         // Calculate cost for current joint-target_point pair in map
+         Joint* targetJoint = t->first;
+         Vector3D q = t->second;
          for(Joint* j_i = targetJoint; j_i != root; j_i = j_i->parent) {
            j_i->calculateAngleGradient(targetJoint, q);
            j_i->setAngle(time, j_i->getAngle(time) - tau * j_i->ikAngleGradient);
-           j_i->rotation = j_i->getAngle(time);
-           // j_i->getEndPosInWorld();
+           // j_i->rotation = j_i->getAngle(time);
          }
        }
      }

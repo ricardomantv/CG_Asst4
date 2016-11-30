@@ -73,22 +73,16 @@ namespace CMU462 { namespace DynamicScene {
      // Implement Me! (task 2B)
      // Calculate column i of Jacobian matrix and store in Joint::ikAngleGradient
 
-     Matrix4x4 T = Matrix4x4::identity();// goalJoint->getTransformation();
-     Vector3D rx = T * Vector3D(1, 0, 0);
-     Vector3D ry = T * Vector3D(0, 1, 0);
-     Vector3D rz = T * Vector3D(0, 0, 1);
+     vector<Vector3D> axes;
+     getAxes(axes);
      Vector3D p = (goalJoint->getEndPosInWorld() - this->getBasePosInWorld());
-     // std::cout << "goalJoint: " << goalJoint->getEndPosInWorld() << "\n";
-     // std::cout << this->getBasePosInWorld() << "\n";
-     // std::cout << "p = " << p << "\n";
 
-     Vector3D jx = cross(rx, p);
-     Vector3D jy = cross(ry, p);
-     Vector3D jz = cross(rz, p);
-     Vector3D diff = p - q;
+     Vector3D jx = cross(axes[0], p);
+     Vector3D jy = cross(axes[1], p);
+     Vector3D jz = cross(axes[2], p);
+     Vector3D diff = goalJoint->getEndPosInWorld() - q;
 
      this->ikAngleGradient = Vector3D(dot(jx, diff), dot(jy, diff), dot(jz, diff));
-     // std::cout << "ikAG: " << this->ikAngleGradient << "\n";
    }
 
 
@@ -213,7 +207,6 @@ namespace CMU462 { namespace DynamicScene {
      Matrix4x4 T = this->getTransformation();
      Vector4D basePos = T * Vector4D(0, 0, 0, 1);
 
-     // std::cout << "basePos: " << basePos << "\n";
      return Vector3D(basePos.x, basePos.y, basePos.z);
    }
 
@@ -230,7 +223,6 @@ namespace CMU462 { namespace DynamicScene {
      Matrix4x4 trans = Matrix4x4::translation(this->axis);
      Vector4D endPos = T * self_T * trans * Vector4D(0, 0, 0, 1);
 
-     // std::cout << "endPos: " << endPos << "\n";
      return Vector3D(endPos.x, endPos.y, endPos.z);
    }
 } // namespace DynamicScene

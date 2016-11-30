@@ -58,6 +58,7 @@ class Mesh : public SceneObject {
   void triangulate();
 
   HalfedgeMesh mesh;
+  std::map<Vertex, vector<LBSInfo>> lbs_map; 
 
   Skeleton* skeleton; // skeleton for mesh
   void linearBlendSkinning(bool useCapsuleRadius);
@@ -107,7 +108,7 @@ class Mesh : public SceneObject {
   DrawStyle *defaultStyle, *hoveredStyle, *selectedStyle;
 
   MeshResampler resampler;
-  
+
   // map from picking IDs to mesh elements, generated during draw_pick
   // and used by setSelection
   std::map<int,HalfedgeElement*> idToElement;
