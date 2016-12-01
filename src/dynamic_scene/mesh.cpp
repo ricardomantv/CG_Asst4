@@ -100,10 +100,64 @@ Mesh::Mesh( Collada::PolymeshInfo& polyMesh, const Matrix4x4& transform)
 
 void Mesh::forward_euler(float timestep, float damping_factor) {
   // Implement Me! (Task 4)
+  /*
+  for(VertexIter v = mesh.verticesBegin(); v != mesh.verticesEnd(); v++) {
+    float delta_u = v->laplacian();
+    float v_k1 = v->velocity + timestep * delta_u;
+    float u_k1 = v->offset + timestep * v->velocity;
+
+    v->velocity = v_k1;
+    v->offset = u_k1;
+  }
+  */
+
+  vector<float> laps;
+  for(VertexIter v = mesh.verticesBegin(); v != mesh.verticesEnd(); v++) {
+    // float delta_u = v->laplacian();
+    float delta_u = v->laplacian() - damping_factor * v->velocity;
+    laps.push_back(delta_u);
+  }
+
+  size_t index = 0;
+  for(VertexIter v = mesh.verticesBegin(); v != mesh.verticesEnd(); v++) {
+    float v_k1 = v->velocity + timestep * laps[index];
+    float u_k1 = v->offset + timestep * v->velocity;
+
+    v->velocity = v_k1;
+    v->offset = u_k1;
+    index++;
+  }
+
 }
 
 void Mesh::symplectic_euler(float timestep, float damping_factor) {
   // Implement Me! (Task 4)
+  /*
+  for(VertexIter v = mesh.verticesBegin(); v != mesh.verticesEnd(); v++) {
+    float delta_u = v->laplacian();
+    float v_k1 = v->velocity + timestep * delta_u;
+    float u_k1 = v->offset + timestep * v_k1;
+
+    v->velocity = v_k1;
+    v->offset = u_k1;
+  }
+  */
+  vector<float> laps;
+  for(VertexIter v = mesh.verticesBegin(); v != mesh.verticesEnd(); v++) {
+    // float delta_u = v->laplacian();
+    float delta_u = v->laplacian() - damping_factor * v->velocity;
+    laps.push_back(delta_u);
+  }
+
+  size_t index = 0;
+  for(VertexIter v = mesh.verticesBegin(); v != mesh.verticesEnd(); v++) {
+    float v_k1 = v->velocity + timestep * laps[index];
+    float u_k1 = v->offset + timestep * v_k1;
+
+    v->velocity = v_k1;
+    v->offset = u_k1;
+    index++;
+  }
 }
 
 void Mesh::resetWave() {

@@ -662,7 +662,30 @@ namespace CMU462 {
   float Vertex::laplacian() const
   {
     // Implement Me! (Task 4)
-    return 0.0;
+    HalfedgeCIter hiter = this->halfedge();
+    double laplacian = 0.0;
+    do {
+      VertexCIter j = hiter->next()->vertex();
+      VertexCIter a = hiter->next()->next()->vertex();
+      VertexCIter b = hiter->twin()->next()->next()->vertex();
+
+      Vector3D ia = this->position - a->position;
+      Vector3D ib = this->position - b->position;
+      Vector3D ja = j->position - a->position;
+      Vector3D jb = j->position - b->position;
+
+      double aij = acos(dot(ia, ja) / (ia.norm() * ja.norm()));
+      double bij = acos(dot(ib, jb) / (ib.norm() * jb.norm()));
+      double cotan_a = cos(aij) / sin(aij);
+      double cotan_b = cos(bij) / sin(bij);
+
+      laplacian += (cotan_a + cotan_b) * (j->offset - this->offset);
+
+      hiter = hiter->next()->next()->twin();
+    } while(hiter != this->halfedge());
+
+    laplacian *= 0.5;
+    return 0.5 * laplacian;
   }
 
   void Vertex::getAxes( vector<Vector3D>& axes ) const
